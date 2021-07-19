@@ -21,22 +21,23 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
-  int nextGroup = 0;
   List groupsForUi = [];
+  int nextGroup = 0;
   final List keepingTheGroupsFromServer = [
     [1, 2, 3, 4, 5],
     [6, 7],
     [8, 9, 10]
   ];
   // ignore: close_sinks
-  StreamController? _streamControllerFromServer;
-  StreamSubscription? _streamSubscriptionFromServer;
+  StreamController? representStreamControllerFromServer;
+  StreamSubscription? representStreamSubscriptionFromServer;
   //
+  // ignore: close_sinks
   StreamController? _streamControllerForUi;
   Stream? _streamForUi;
 
-  manageSwipe() {
-    print('group number got like/unlike');
+  manageSwipe(bool swipe) {
+    print('group number got $swipe');
     groupsForUi.removeLast();
     groupsForUi.isNotEmpty
         ? _streamControllerForUi!.add(groupsForUi.last)
@@ -46,35 +47,26 @@ class _MyHomePageState extends State<MyHomePage> {
   @override
   void initState() {
     super.initState();
-    // stream how recive events from stream server and from swipe manage the data and send event
-    // to the ui stream
-    // one stream cant handle the data from server and the ui becouse they act like two different pipes
-    // one pipe is getting data from server and manageing it on client side
-    // second pipe getting the data from the first pipe after the data was managed and then update the ui
-
+    // there are two stream :
+    // 1 - stream that represent the stream from server
+    // 2 - stream that manage the ui
     // ignore: close_sinks
-    // this stream is getting event from swipe and from server
-    _streamControllerFromServer = StreamController();
-    _streamSubscriptionFromServer =
-        _streamControllerFromServer!.stream.listen((event) {
+    // this stream is represent the stream coming from the server
+    representStreamControllerFromServer = StreamController();
+    representStreamSubscriptionFromServer =
+        representStreamControllerFromServer!.stream.listen((event) {
       if (event is List<int>) {
-        bool updateUi = groupsForUi.isEmpty;
+        bool? updateUi = groupsForUi.isEmpty;
         for (int group in event) {
           groupsForUi.insert(0, group);
         }
         updateUi ? _streamControllerForUi!.add(groupsForUi.last) : null;
 //        _streamControllerForUi!.add(event);
-      } else if (event is bool) {
-        // update the ui
-        print('group number got like/unlike');
-        groupsForUi.removeLast();
-        groupsForUi.isNotEmpty
-            ? _streamControllerForUi!.add(groupsForUi.last)
-            : _streamControllerForUi!.add(null);
       } else {
-        print('event isnt bool or list, event is : $event');
+        print('event isnt list, event is : $event');
       }
     });
+
     _streamControllerForUi = StreamController();
     _streamForUi = _streamControllerForUi!.stream;
   }
@@ -93,7 +85,7 @@ class _MyHomePageState extends State<MyHomePage> {
                 style: TextStyle(fontSize: 20),
               ),
               onTap: () {
-                _streamControllerFromServer!
+                representStreamControllerFromServer!
                     .add(keepingTheGroupsFromServer[nextGroup]);
                 // next line of code dont need to be used with the real server
                 nextGroup < 3 ? nextGroup++ : null;
@@ -113,7 +105,7 @@ class _MyHomePageState extends State<MyHomePage> {
                   color: Colors.blue,
                   child: ElevatedButton(
                     onPressed: () {
-                      _streamControllerFromServer!.add(true);
+                      manageSwipe(true);
                     },
                     child: Text(snap.data!.toString()),
                   ),
