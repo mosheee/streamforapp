@@ -87,7 +87,7 @@ class _MyHomePageState extends State<MyHomePage> {
               onTap: () {
                 representStreamControllerFromServer!
                     .add(keepingTheGroupsFromServer[nextGroup]);
-                // next line of code dont need to be used with the real server
+                // next line of code dont need to be used with the real serve
                 nextGroup < 3 ? nextGroup++ : null;
               },
             ),
